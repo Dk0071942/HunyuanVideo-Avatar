@@ -48,6 +48,7 @@ def predict(data=Body(...)):
     return {"errCode": -1, "info": "broken"}
 
 def predict_wrap(input_dict={}):
+    rank = 0
     if nccl_info.sp_size > 1:
         device = torch.device(f"cuda:{torch.distributed.get_rank()}")
         rank = local_rank = torch.distributed.get_rank()
@@ -262,7 +263,7 @@ if __name__ == "__main__":
 
 
     if rank == 0:
-        uvicorn.run(app, host="0.0.0.0", port=80)
+        uvicorn.run(app, host="0.0.0.0", port=8001)
     else:
         worker_loop()
     

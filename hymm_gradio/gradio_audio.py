@@ -6,6 +6,7 @@ import datetime
 import requests
 import gradio as gr
 from tool_for_end2end import *
+import time
 
 os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
 DATADIR = './temp'
@@ -16,7 +17,7 @@ _HEADER_ = '''
 
 ''' 
 # flask url
-URL = "http://127.0.0.1:80/predict2"
+URL = "http://127.0.0.1:8001/predict2"
 
 def post_and_get(audio_input, id_image, prompt):
     now = datetime.datetime.now().isoformat()
@@ -43,7 +44,12 @@ def post_and_get(audio_input, id_image, prompt):
     }
     r = requests.get(URL, data = json.dumps(files), proxies=proxies)
     ret_dict = json.loads(r.text)
-    print(ret_dict["info"])
+    
+    if "content" not in ret_dict or not ret_dict.get("content") or not ret_dict["content"][0].get("buffer"):
+        error_message = ret_dict.get("info", "An unknown error occurred on the backend.")
+        raise gr.Error(f"Failed to generate video. Backend error: {error_message}")
+
+    print(ret_dict.get("info", "Processing..."))
     save_video_base64_to_local(
         video_path=None, 
         base64_buffer=ret_dict["content"][0]["buffer"], 
@@ -84,7 +90,18 @@ def create_demo():
             
     return demo
 
+def wait_for_server(url):
+    while True:
+        try:
+            requests.get(url)
+            print("Backend server is ready.")
+            break
+        except requests.exceptions.ConnectionError:
+            print("Waiting for backend server...")
+            time.sleep(5)
+
 if __name__ == "__main__":
+    wait_for_server(URL)
     allowed_paths = ['/']
     demo = create_demo()
-    demo.launch(server_name='0.0.0.0', server_port=8080, share=True, allowed_paths=allowed_paths)
+    demo.launch(server_name='0.0.0.0', server_port=8000, share=False, allowed_paths=allowed_paths)
