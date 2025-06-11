@@ -19,7 +19,7 @@ torchrun --nnodes=1 --nproc_per_node=1 --master_port 29605 hymm_gradio/flask_aud
     --use-deepcache 1 \
     --flow-shift-eval-video 5.0 \
     --use-fp8 \
-    --text-encoder-precision-2 fp16 \
+    # --text-encoder-precision-2 fp16 \
     --infer-min &
 
 
